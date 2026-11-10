@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "SurveyResponse": {
+      "title": "SurveyResponse",
+      "description": "Anonymous training satisfaction evaluation submitted once per device without login or respondent PII.",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "description": "Anonymous client-generated device identifier stored in localStorage to prevent duplicate submissions.",
+          "minLength": 8,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "surveyKey": {
+          "type": "string",
+          "description": "Identifier of the training session survey.",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "q1": {
+          "type": "integer",
+          "description": "Rating 1-5 for knowledge and understanding gained."
+        },
+        "q2": {
+          "type": "integer",
+          "description": "Rating 1-5 for practical applicability."
+        },
+        "q3": {
+          "type": "integer",
+          "description": "Rating 1-5 for training materials and media."
+        },
+        "q4": {
+          "type": "integer",
+          "description": "Rating 1-5 for instructor clarity and delivery."
+        },
+        "q5": {
+          "type": "integer",
+          "description": "Rating 1-5 for overall training satisfaction."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Optional anonymous suggestion or feedback (max 500 characters).",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp recorded at submission time."
+        }
+      },
+      "required": [
+        "deviceId",
+        "surveyKey",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "comment",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/responses/{deviceId}": {
+      "schema": {
+        "$ref": "#/entities/SurveyResponse"
+      },
+      "description": "Stores anonymous training evaluation responses keyed by deviceId to enforce one submission per device."
+    }
+  }
+}

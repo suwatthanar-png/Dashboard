@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>แบบประเมินความพึงพอใจการอบรม</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: 'IBM Plex Sans Thai', system-ui, -apple-system, sans-serif;
+      }
+      .tabular-nums {
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <!-- Top Bar -->
+    <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div class="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
+        <span class="text-base font-bold tracking-tight text-slate-900">PulseEval</span>
+        <a
+          href="dashboard.html"
+          class="text-sm font-medium text-teal-700 hover:underline whitespace-nowrap"
+        >
+          ดูผล Dashboard
+        </a>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-2xl px-4 pb-28 pt-6 sm:pb-12">
+      <!-- Intro -->
+      <section class="mb-6 border-b border-slate-200 pb-5">
+        <p class="text-xs font-medium text-slate-500">แบบสอบถามออนไลน์ · ไม่ระบุตัวตน · ใช้เวลาไม่เกิน 1 นาที</p>
+        <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          ประเมินความพึงพอใจผู้เข้าร่วมอบรม
+        </h1>
+        <p class="mt-2 text-sm leading-relaxed text-slate-600">
+          เลือกระดับความพึงพอใจตั้งแต่ 1 (น้อยที่สุด) ถึง 5 (มากที่สุด) ข้อมูลของท่านจะถูกนำไปคำนวณผลรวมทันทีโดยไม่เก็บชื่อหรือข้อมูลส่วนตัว
+        </p>
+      </section>
+
+      <!-- Config Warning (shown only if firebaseConfig is still placeholder) -->
+      <div
+        id="config-warning"
+        class="mb-6 hidden rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
+      >
+        <p class="font-semibold">ยังไม่ได้ใส่ค่า Firebase Config ในไฟล์ survey.html</p>
+        <p class="mt-1 text-xs leading-relaxed text-amber-800">
+          กรุณาเปิดไฟล์ survey.html แล้วนำค่า <code>firebaseConfig</code> (รวมถึง <code>databaseURL</code>) จาก Firebase Console มาแทนที่ตัวอย่างก่อนใช้งานจริง
+        </p>
+      </div>
+
+      <!-- Already Submitted State -->
+      <section
+        id="submitted-view"
+        class="hidden rounded-2xl border border-slate-200 bg-white p-6 text-center sm:p-8"
+      >
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+          <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 class="mt-4 text-xl font-bold text-slate-900">ขอบคุณสำหรับการประเมิน</h2>
+        <p class="mt-2 text-sm leading-relaxed text-slate-600">
+          ระบบได้รับคำตอบจากอุปกรณ์นี้เรียบร้อยแล้ว และป้องกันการส่งซ้ำในเครื่องเดียวกันเพื่อให้ผลสรุปแม่นยำที่สุด
+        </p>
+        <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <a
+            href="dashboard.html"
+            class="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-teal-700 px-6 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            เปิดดูผลบน Dashboard
+          </a>
+        </div>
+      </section>
+
+      <!-- Survey Form -->
+      <form id="survey-form" class="space-y-5" novalidate>
+        <!-- Scale Legend -->
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+          <span><strong class="font-semibold text-slate-900">1</strong> = น้อยที่สุด</span>
+          <span><strong class="font-semibold text-slate-900">2</strong> = น้อย</span>
+          <span><strong class="font-semibold text-slate-900">3</strong> = ปานกลาง</span>
+          <span><strong class="font-semibold text-slate-900">4</strong> = มาก</span>
+          <span><strong class="font-semibold text-slate-900">5</strong> = มากที่สุด</span>
+        </div>
+
+        <div id="questions-container" class="space-y-4"></div>
+
+        <!-- Optional Comment -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          <div class="flex items-baseline justify-between gap-2">
+            <label for="comment-input" class="text-base font-semibold text-slate-900">
+              ข้อเสนอแนะเพิ่มเติม <span class="text-sm font-normal text-slate-500">(ไม่บังคับ)</span>
+            </label>
+            <span id="comment-count" class="tabular-nums text-xs text-slate-500">0/500</span>
+          </div>
+          <textarea
+            id="comment-input"
+            rows="3"
+            maxlength="500"
+            placeholder="พิมพ์สิ่งที่ประทับใจ หรือหัวข้อที่อยากให้เพิ่มเติมในการอบรมครั้งถัดไป..."
+            class="mt-3 w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none"
+          ></textarea>
+        </div>
+
+        <!-- Inline Error Message -->
+        <div
+          id="form-error"
+          role="alert"
+          class="hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+        ></div>
+
+        <!-- Submit Bar (Fixed bottom on mobile, inline on sm+) -->
+        <div
+          class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-3 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0"
+        >
+          <div class="mx-auto max-w-2xl">
+            <button
+              id="submit-btn"
+              type="submit"
+              class="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-teal-700 px-6 text-base font-semibold text-white transition active:scale-[0.99] hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              ส่งแบบประเมินความพึงพอใจ
+            </button>
+          </div>
+        </div>
+      </form>
+    </main>
+
+    <!-- Firebase Compat SDKs (App + Realtime Database) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+    <script>
+      // ============================================================
+      // 1. ตั้งค่า Firebase Realtime Database ของคุณตรงนี้
+      // ============================================================
+      const firebaseConfig = {
+        apiKey: 'YOUR_API_KEY',
+        authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
+        databaseURL: 'https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app',
+        projectId: 'YOUR_PROJECT_ID',
+        storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+        messagingSenderId: 'YOUR_SENDER_ID',
+        appId: 'YOUR_APP_ID',
+      };
+
+      const QUESTIONS = [
+        { key: 'q1', num: 1, title: 'ความรู้ความเข้าใจที่ได้รับจากการอบรม', desc: 'เนื้อหามีความชัดเจน ทันสมัย และตรงกับวัตถุประสงค์' },
+        { key: 'q2', num: 2, title: 'ความสามารถในการนำความรู้ไปประยุกต์ใช้', desc: 'สามารถนำไปปรับใช้ในการทำงานจริงได้ทันที' },
+        { key: 'q3', num: 3, title: 'ความเหมาะสมของสื่อและเอกสารประกอบ', desc: 'สไลด์ คู่มือ หรือตัวอย่างประกอบเข้าใจง่ายและครบถ้วน' },
+        { key: 'q4', num: 4, title: 'ความชัดเจนในการถ่ายทอดของวิทยากร', desc: 'การอธิบาย การตอบคำถาม และการกระตุ้นการมีส่วนร่วม' },
+        { key: 'q5', num: 5, title: 'ความพึงพอใจโดยรวมต่อการจัดอบรม', desc: 'ภาพรวมของการจัดกิจกรรม เวลา และประสบการณ์ตลอดการอบรม' },
+      ];
+
+      const SCORE_TEXT = {
+        1: 'น้อยที่สุด',
+        2: 'น้อย',
+        3: 'ปานกลาง',
+        4: 'มาก',
+        5: 'มากที่สุด',
+      };
+
+      const DEVICE_KEY = 'pulse_eval_rtdb_device_id';
+      const SUBMITTED_KEY = 'pulse_eval_rtdb_submitted';
+
+      function getDeviceId() {
+        let id = localStorage.getItem(DEVICE_KEY);
+        if (!id || !/^[a-zA-Z0-9_-]{8,64}$/.test(id)) {
+          const rand = (crypto && crypto.randomUUID)
+            ? crypto.randomUUID().replace(/-/g, '')
+            : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+          id = ('dev_' + rand).slice(0, 48);
+          localStorage.setItem(DEVICE_KEY, id);
+        }
+        return id;
+      }
+
+      const isPlaceholderConfig = firebaseConfig.apiKey === 'YOUR_API_KEY';
+      let db = null;
+      if (isPlaceholderConfig) {
+        document.getElementById('config-warning').classList.remove('hidden');
+      } else {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+      }
+
+      const answers = { q1: null, q2: null, q3: null, q4: null, q5: null };
+      const container = document.getElementById('questions-container');
+      const formEl = document.getElementById('survey-form');
+      const submittedEl = document.getElementById('submitted-view');
+      const errorEl = document.getElementById('form-error');
+      const submitBtn = document.getElementById('submit-btn');
+      const commentInput = document.getElementById('comment-input');
+      const commentCount = document.getElementById('comment-count');
+
+      function renderQuestions() {
+        container.innerHTML = QUESTIONS.map((q) => {
+          const buttons = [1, 2, 3, 4, 5]
+            .map((score) => `
+              <button
+                type="button"
+                data-question="${q.key}"
+                data-score="${score}"
+                aria-label="ข้อ ${q.num} คะแนน ${score} (${SCORE_TEXT[score]})"
+                class="rating-btn flex min-h-[54px] flex-col items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-1 py-2 text-slate-800 transition active:scale-95 hover:border-teal-600"
+              >
+                <span class="tabular-nums text-lg font-bold leading-none">${score}</span>
+                <span class="mt-1 text-[11px] leading-none opacity-80">${SCORE_TEXT[score]}</span>
+              </button>
+            `)
+            .join('');
+
+          return `
+            <fieldset id="card-${q.key}" class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+              <legend class="sr-only">${q.title}</legend>
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-xs font-medium text-slate-500 tabular-nums">ข้อที่ ${q.num} จาก 5</p>
+                  <h2 class="mt-0.5 text-base font-semibold leading-snug text-slate-900">${q.title}</h2>
+                  <p class="mt-1 text-xs text-slate-500">${q.desc}</p>
+                </div>
+                <span id="picked-${q.key}" class="tabular-nums text-xs font-semibold text-teal-700 whitespace-nowrap"></span>
+              </div>
+              <div class="mt-4 grid grid-cols-5 gap-2">${buttons}</div>
+            </fieldset>
+          `;
+        }).join('');
+
+        document.querySelectorAll('.rating-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const qKey = btn.getAttribute('data-question');
+            const score = Number(btn.getAttribute('data-score'));
+            answers[qKey] = score;
+            updateQuestionUI(qKey, score);
+            errorEl.classList.add('hidden');
+          });
+        });
+      }
+
+      function updateQuestionUI(qKey, selectedScore) {
+        const card = document.getElementById('card-' + qKey);
+        card.classList.remove('border-rose-400', 'ring-1', 'ring-rose-300');
+        document.getElementById('picked-' + qKey).textContent = selectedScore + '/5 · ' + SCORE_TEXT[selectedScore];
+
+        card.querySelectorAll('.rating-btn').forEach((btn) => {
+          const s = Number(btn.getAttribute('data-score'));
+          if (s === selectedScore) {
+            btn.className = 'rating-btn flex min-h-[54px] flex-col items-center justify-center rounded-xl border border-teal-700 bg-teal-700 px-1 py-2 text-white shadow-sm transition active:scale-95';
+          } else {
+            btn.className = 'rating-btn flex min-h-[54px] flex-col items-center justify-center rounded-xl border border-slate-300 bg-slate-50 px-1 py-2 text-slate-800 transition active:scale-95 hover:border-teal-600';
+          }
+        });
+      }
+
+      function showSubmittedState() {
+        formEl.classList.add('hidden');
+        submittedEl.classList.remove('hidden');
+      }
+
+      async function checkDuplicate() {
+        if (localStorage.getItem(SUBMITTED_KEY) === '1') {
+          showSubmittedState();
+          return true;
+        }
+        if (db) {
+          const deviceId = getDeviceId();
+          try {
+            const snap = await db.ref('responses/' + deviceId).once('value');
+            if (snap.exists()) {
+              localStorage.setItem(SUBMITTED_KEY, '1');
+              showSubmittedState();
+              return true;
+            }
+          } catch (err) {
+            console.warn('Duplicate check skipped:', err);
+          }
+        }
+        return false;
+      }
+
+      commentInput.addEventListener('input', () => {
+        commentCount.textContent = commentInput.value.length + '/500';
+      });
+
+      formEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.classList.add('hidden');
+
+        const missing = QUESTIONS.find((q) => !answers[q.key]);
+        if (missing) {
+          const card = document.getElementById('card-' + missing.key);
+          card.classList.add('border-rose-400', 'ring-1', 'ring-rose-300');
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          errorEl.textContent = 'กรุณาให้คะแนนข้อที่ ' + missing.num + ' (' + missing.title + ') ให้ครบทุกข้อ';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        if (!db) {
+          errorEl.textContent = 'กรุณาตั้งค่า firebaseConfig ในไฟล์ survey.html ก่อนส่งข้อมูลจริง';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังบันทึกคำตอบ...';
+
+        try {
+          const deviceId = getDeviceId();
+          const existingSnap = await db.ref('responses/' + deviceId).once('value');
+          if (existingSnap.exists()) {
+            localStorage.setItem(SUBMITTED_KEY, '1');
+            showSubmittedState();
+            return;
+          }
+
+          await db.ref('responses/' + deviceId).set({
+            q1: answers.q1,
+            q2: answers.q2,
+            q3: answers.q3,
+            q4: answers.q4,
+            q5: answers.q5,
+            comment: commentInput.value.trim().slice(0, 500),
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+          });
+
+          localStorage.setItem(SUBMITTED_KEY, '1');
+          showSubmittedState();
+        } catch (err) {
+          console.error(err);
+          errorEl.textContent = 'ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง หรือตรวจสอบ Realtime Database Rules';
+          errorEl.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'ส่งแบบประเมินความพึงพอใจ';
+        }
+      });
+
+      renderQuestions();
+      checkDuplicate();
+    </script>
+  </body>
+</html>

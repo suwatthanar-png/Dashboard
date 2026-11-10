@@ -1,0 +1,6 @@
+{
+  "name": "PulseEval — ระบบประเมินความพึงพอใจการอบรม",
+  "description": "แบบสอบถามความพึงพอใจผู้เข้าอบรม (Mobile-first) พร้อม Dashboard โปรเจกเตอร์อัปเดตแบบเรียลไทม์, QR Code และส่งออก CSV",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
